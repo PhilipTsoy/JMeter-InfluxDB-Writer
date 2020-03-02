@@ -86,8 +86,12 @@ public interface RequestMeasurement {
 		 */
 		String URL = "url";
 		/**
-		 * URL
+		 * URL field
 		 */
 		String IS_SUCCESSFUL = "success";
+		/**
+		 * HTTP method field
+		 */
+		String HTTP_METHOD = "httpMethod";
 	}
 }

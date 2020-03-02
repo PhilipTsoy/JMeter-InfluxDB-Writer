@@ -3,13 +3,14 @@ package rocks.nt.apm.jmeter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.jmeter.config.Arguments;
+import org.apache.jmeter.protocol.http.sampler.HTTPSampleResult;
 import org.apache.jmeter.samplers.SampleResult;
 import org.apache.jmeter.threads.JMeterContextService;
 import org.apache.jmeter.threads.JMeterContextService.ThreadCounts;
@@ -131,6 +132,12 @@ public class JMeterInfluxDBBackendListenerClient extends AbstractBackendListener
             getUserMetrics().add(sampleResult);
 
 			if ((null != regexForSamplerList && sampleResult.getSampleLabel().matches(regexForSamplerList)) || samplersToFilter.contains(sampleResult.getSampleLabel())) {
+				String httpMethod = "";
+				
+				if (sampleResult instanceof HTTPSampleResult) {
+					httpMethod = ((HTTPSampleResult) sampleResult).getHTTPMethod();
+				}
+				
 				Point point = Point.measurement(RequestMeasurement.MEASUREMENT_NAME).time(
 						System.currentTimeMillis() * ONE_MS_IN_NANOSECONDS + getUniqueNumberForTheSamplerThread(), TimeUnit.NANOSECONDS)
 						.tag(RequestMeasurement.Tags.REQUEST_NAME, sampleResult.getSampleLabel())
@@ -146,7 +153,9 @@ public class JMeterInfluxDBBackendListenerClient extends AbstractBackendListener
 						.addField(RequestMeasurement.Fields.SENT_BYTES, sampleResult.getSentBytes())
 						.addField(RequestMeasurement.Fields.URL, sampleResult.getUrlAsString())
 						.addField(RequestMeasurement.Fields.IS_SUCCESSFUL, sampleResult.isSuccessful())
+						.addField(RequestMeasurement.Fields.HTTP_METHOD, httpMethod)
 						.build();
+
 				influxDB.write(influxDBConfig.getInfluxDatabase(), influxDBConfig.getInfluxRetentionPolicy(), point);
 			}
 		}

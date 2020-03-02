@@ -25,15 +25,15 @@ public interface RequestMeasurement {
 		 */
 		String REQUEST_NAME = "requestName";
 
-                /** 
-                 * Influx DB tag for a unique identifier for each execution(aka 'run') of a load test.
-                 */  
-                String RUN_ID = "runId";
+        /** 
+        * Influx DB tag for a unique identifier for each execution(aka 'run') of a load test.
+        */  
+        String RUN_ID = "runId";
 
-                /** 
-                 * Test name field
-                 */  
-                String TEST_NAME = "testName";
+        /** 
+        * Test name field
+        */  
+        String TEST_NAME = "testName";
 	}
 
 	/**
@@ -62,5 +62,32 @@ public interface RequestMeasurement {
 		 * Node name field
 		 */
 		String NODE_NAME = "nodeName";
+		
+		/**
+		 * Response code filed
+		 */
+		String RESPONSE_CODE = "responseCode";
+
+		/**
+		 * Response message filed
+		 */
+		String RESPONSE_MSG = "responseMsg";
+		/**
+		 * Sent bytes in request field
+		 */
+		String SENT_BYTES = "sentBytes";
+		/**
+		 * Received bytes in response filed
+		 */
+		String RECEIVED_BYTES = "receivedBytes";
+		
+		/**
+		 * URL
+		 */
+		String URL = "url";
+		/**
+		 * URL
+		 */
+		String IS_SUCCESSFUL = "success";
 	}
 }

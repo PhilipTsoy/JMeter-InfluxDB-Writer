@@ -134,12 +134,19 @@ public class JMeterInfluxDBBackendListenerClient extends AbstractBackendListener
 				Point point = Point.measurement(RequestMeasurement.MEASUREMENT_NAME).time(
 						System.currentTimeMillis() * ONE_MS_IN_NANOSECONDS + getUniqueNumberForTheSamplerThread(), TimeUnit.NANOSECONDS)
 						.tag(RequestMeasurement.Tags.REQUEST_NAME, sampleResult.getSampleLabel())
-                                                .addField(RequestMeasurement.Fields.ERROR_COUNT, sampleResult.getErrorCount())
+						.addField(RequestMeasurement.Fields.ERROR_COUNT, sampleResult.getErrorCount())
 						.addField(RequestMeasurement.Fields.THREAD_NAME, sampleResult.getThreadName())
 						.tag(RequestMeasurement.Tags.RUN_ID, runId)
 						.tag(RequestMeasurement.Tags.TEST_NAME, testName)
 						.addField(RequestMeasurement.Fields.NODE_NAME, nodeName)
-						.addField(RequestMeasurement.Fields.RESPONSE_TIME, sampleResult.getTime()).build();
+						.addField(RequestMeasurement.Fields.RESPONSE_TIME, sampleResult.getTime())
+						.addField(RequestMeasurement.Fields.RESPONSE_CODE, sampleResult.getResponseCode())
+						.addField(RequestMeasurement.Fields.RESPONSE_MSG, sampleResult.getResponseMessage())
+						.addField(RequestMeasurement.Fields.RECEIVED_BYTES, sampleResult.getBytesAsLong())
+						.addField(RequestMeasurement.Fields.SENT_BYTES, sampleResult.getSentBytes())
+						.addField(RequestMeasurement.Fields.URL, sampleResult.getUrlAsString())
+						.addField(RequestMeasurement.Fields.IS_SUCCESSFUL, sampleResult.isSuccessful())
+						.build();
 				influxDB.write(influxDBConfig.getInfluxDatabase(), influxDBConfig.getInfluxRetentionPolicy(), point);
 			}
 		}

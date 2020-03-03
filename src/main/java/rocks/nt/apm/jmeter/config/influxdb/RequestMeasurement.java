@@ -93,5 +93,9 @@ public interface RequestMeasurement {
 		 * HTTP method field
 		 */
 		String HTTP_METHOD = "httpMethod";
+		/**
+		 * Assertion fail message field
+		 */
+		String ASSERTION_FAIL_MSG = "assertionFailMsg";
 	}
 }

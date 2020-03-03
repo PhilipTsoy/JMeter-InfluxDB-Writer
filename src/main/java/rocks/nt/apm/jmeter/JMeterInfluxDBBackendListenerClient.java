@@ -1,10 +1,12 @@
 package rocks.nt.apm.jmeter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -133,12 +135,6 @@ public class JMeterInfluxDBBackendListenerClient extends AbstractBackendListener
             getUserMetrics().add(sampleResult);
 
 			if ((null != regexForSamplerList && sampleResult.getSampleLabel().matches(regexForSamplerList)) || samplersToFilter.contains(sampleResult.getSampleLabel())) {
-				String httpMethod = "";
-				
-				if (sampleResult instanceof HTTPSampleResult) {
-					httpMethod = ((HTTPSampleResult) sampleResult).getHTTPMethod();
-				}
-				
 				Point point = Point.measurement(RequestMeasurement.MEASUREMENT_NAME).time(
 						System.currentTimeMillis() * ONE_MS_IN_NANOSECONDS + getUniqueNumberForTheSamplerThread(), TimeUnit.NANOSECONDS)
 						.tag(RequestMeasurement.Tags.REQUEST_NAME, sampleResult.getSampleLabel())
@@ -154,7 +150,8 @@ public class JMeterInfluxDBBackendListenerClient extends AbstractBackendListener
 						.addField(RequestMeasurement.Fields.SENT_BYTES, sampleResult.getSentBytes())
 						.addField(RequestMeasurement.Fields.URL, sampleResult.getUrlAsString())
 						.addField(RequestMeasurement.Fields.IS_SUCCESSFUL, sampleResult.isSuccessful())
-						.addField(RequestMeasurement.Fields.HTTP_METHOD, httpMethod)
+						.addField(RequestMeasurement.Fields.ASSERTION_FAIL_MSG, getAggregatedAssertionFailMessage(sampleResult))
+						.addField(RequestMeasurement.Fields.HTTP_METHOD, getHttpMethod(sampleResult))
 						.build();
 
 				influxDB.write(influxDBConfig.getInfluxDatabase(), influxDBConfig.getInfluxRetentionPolicy(), point);
@@ -315,5 +312,24 @@ public class JMeterInfluxDBBackendListenerClient extends AbstractBackendListener
 	 */
 	private int getUniqueNumberForTheSamplerThread() {
 		return randomNumberGenerator.nextInt(ONE_MS_IN_NANOSECONDS);
+	}
+	
+	/**
+	 * Gets all assertion failure messages as aggregated string joined by '; ' 
+	 */
+	private String getAggregatedAssertionFailMessage(SampleResult sampleResult) {
+		return Arrays.stream(sampleResult.getAssertionResults())
+				.map(assertion -> assertion.getFailureMessage())
+				.filter(message -> message != null)
+				.collect(Collectors.joining("; "));
+	}
+	
+	/**
+	 * Gets HTTP method name (GET/POST/PUT etc.) of HTTPSampleResult 
+	 */
+	private String getHttpMethod(SampleResult sampleResult) {
+		return (sampleResult instanceof HTTPSampleResult) 
+				? ((HTTPSampleResult)sampleResult).getHTTPMethod() 
+				: "";
 	}
 }

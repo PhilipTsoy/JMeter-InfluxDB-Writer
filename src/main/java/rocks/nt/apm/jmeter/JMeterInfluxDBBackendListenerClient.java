@@ -16,12 +16,13 @@ import org.apache.jmeter.threads.JMeterContextService;
 import org.apache.jmeter.threads.JMeterContextService.ThreadCounts;
 import org.apache.jmeter.visualizers.backend.AbstractBackendListenerClient;
 import org.apache.jmeter.visualizers.backend.BackendListenerContext;
-import org.apache.jorphan.logging.LoggingManager;
-import org.apache.log.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBFactory;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Point.Builder;
+import org.influxdb.dto.Query;
 
 import rocks.nt.apm.jmeter.config.influxdb.InfluxDBConfig;
 import rocks.nt.apm.jmeter.config.influxdb.RequestMeasurement;
@@ -38,8 +39,8 @@ public class JMeterInfluxDBBackendListenerClient extends AbstractBackendListener
 	/**
 	 * Logger.
 	 */
-	private static final Logger LOGGER = LoggingManager.getLoggerForClass();
-
+	private static final Logger LOGGER = LoggerFactory.getLogger(JMeterInfluxDBBackendListenerClient.class);
+	
 	/**
 	 * Parameter Keys.
 	 */
@@ -258,7 +259,7 @@ public class JMeterInfluxDBBackendListenerClient extends AbstractBackendListener
 		influxDBConfig = new InfluxDBConfig(context);
 		influxDB = InfluxDBFactory.connect(influxDBConfig.getInfluxDBURL(), influxDBConfig.getInfluxUser(), influxDBConfig.getInfluxPassword());
 		influxDB.enableBatch(100, 5, TimeUnit.SECONDS);
-		createDatabaseIfNotExistent();
+		createDatabase();
 	}
 
 	/**
@@ -299,13 +300,14 @@ public class JMeterInfluxDBBackendListenerClient extends AbstractBackendListener
 	}
 
 	/**
-	 * Creates the configured database in influx if it does not exist yet.
+	 * Creates the configured database in influx DB.
+	 * 
+	 * If you attempt to create a database that already exists,
+	 * InfluxDB does nothing and does not return an error
 	 */
-	private void createDatabaseIfNotExistent() {
-		List<String> dbNames = influxDB.describeDatabases();
-		if (!dbNames.contains(influxDBConfig.getInfluxDatabase())) {
-			influxDB.createDatabase(influxDBConfig.getInfluxDatabase());
-		}
+	private void createDatabase() {
+		String createDbQuery = String.format("CREATE DATABASE \"%s\"", influxDBConfig.getInfluxDatabase());
+		influxDB.query(new Query(createDbQuery));
 	}
 
 	/**

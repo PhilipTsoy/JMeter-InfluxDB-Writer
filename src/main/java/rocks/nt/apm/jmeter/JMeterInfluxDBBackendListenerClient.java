@@ -52,6 +52,8 @@ public class JMeterInfluxDBBackendListenerClient extends AbstractBackendListener
 	private static final String KEY_NODE_NAME = "nodeName";
 	private static final String KEY_SAMPLERS_LIST = "samplersList";
 	private static final String KEY_RECORD_SUB_SAMPLES = "recordSubSamples";
+	private static final String KEY_RECORD_SAMPLER_DATA = "recordSamplerData";
+	private static final String KEY_RECORD_RESPONSE_DATA = "recordResponseData";
 
 	/**
 	 * Constants.
@@ -116,6 +118,16 @@ public class JMeterInfluxDBBackendListenerClient extends AbstractBackendListener
 	private boolean recordSubSamples;
 
 	/**
+	 * Indicates whether to record Sampler Data (Request Data)
+	 */
+	private boolean recordSamplerData;
+	
+	/**
+	 * Indicates whether to record Response Data
+	 */
+	private boolean recordResponseData;
+	
+	/**
 	 * Processes sampler results.
 	 */
 	public void handleSampleResults(List<SampleResult> sampleResults, BackendListenerContext context) {
@@ -135,8 +147,8 @@ public class JMeterInfluxDBBackendListenerClient extends AbstractBackendListener
             getUserMetrics().add(sampleResult);
 
 			if ((null != regexForSamplerList && sampleResult.getSampleLabel().matches(regexForSamplerList)) || samplersToFilter.contains(sampleResult.getSampleLabel())) {
-				Point point = Point.measurement(RequestMeasurement.MEASUREMENT_NAME).time(
-						System.currentTimeMillis() * ONE_MS_IN_NANOSECONDS + getUniqueNumberForTheSamplerThread(), TimeUnit.NANOSECONDS)
+				Builder pointBuilder = Point.measurement(RequestMeasurement.MEASUREMENT_NAME)
+						.time(System.currentTimeMillis() * ONE_MS_IN_NANOSECONDS + getUniqueNumberForTheSamplerThread(), TimeUnit.NANOSECONDS)
 						.tag(RequestMeasurement.Tags.REQUEST_NAME, sampleResult.getSampleLabel())
 						.addField(RequestMeasurement.Fields.ERROR_COUNT, sampleResult.getErrorCount())
 						.addField(RequestMeasurement.Fields.THREAD_NAME, sampleResult.getThreadName())
@@ -151,9 +163,17 @@ public class JMeterInfluxDBBackendListenerClient extends AbstractBackendListener
 						.addField(RequestMeasurement.Fields.URL, sampleResult.getUrlAsString())
 						.addField(RequestMeasurement.Fields.IS_SUCCESSFUL, sampleResult.isSuccessful())
 						.addField(RequestMeasurement.Fields.ASSERTION_FAIL_MSG, getAggregatedAssertionFailMessage(sampleResult))
-						.addField(RequestMeasurement.Fields.HTTP_METHOD, getHttpMethod(sampleResult))
-						.build();
-
+						.addField(RequestMeasurement.Fields.HTTP_METHOD, getHttpMethod(sampleResult));
+				
+				if (recordSamplerData) {
+					pointBuilder.addField(RequestMeasurement.Fields.SAMPLER_DATA, sampleResult.getSamplerData());
+				}
+				
+				if (recordResponseData) {
+					pointBuilder.addField(RequestMeasurement.Fields.RESPONSE_DATA, sampleResult.getResponseDataAsString());
+				}
+				
+				Point point = pointBuilder.build();
 				influxDB.write(influxDBConfig.getInfluxDatabase(), influxDBConfig.getInfluxRetentionPolicy(), point);
 			}
 		}
@@ -174,6 +194,9 @@ public class JMeterInfluxDBBackendListenerClient extends AbstractBackendListener
 		arguments.addArgument(KEY_SAMPLERS_LIST, ".*");
 		arguments.addArgument(KEY_USE_REGEX_FOR_SAMPLER_LIST, "true");
 		arguments.addArgument(KEY_RECORD_SUB_SAMPLES, "true");
+		arguments.addArgument(KEY_RECORD_SAMPLER_DATA, "false");
+		arguments.addArgument(KEY_RECORD_RESPONSE_DATA, "false");
+		
 		return arguments;
 	}
 
@@ -203,6 +226,10 @@ public class JMeterInfluxDBBackendListenerClient extends AbstractBackendListener
 
 		// Indicates whether to write sub sample records to the database
 		recordSubSamples = Boolean.parseBoolean(context.getParameter(KEY_RECORD_SUB_SAMPLES, "false"));
+		
+		// Indicates whether to write sampler/response data to the database
+		recordSamplerData = Boolean.parseBoolean(context.getParameter(KEY_RECORD_SAMPLER_DATA, "false"));
+		recordResponseData = Boolean.parseBoolean(context.getParameter(KEY_RECORD_RESPONSE_DATA, "false"));
 	}
 
 	@Override

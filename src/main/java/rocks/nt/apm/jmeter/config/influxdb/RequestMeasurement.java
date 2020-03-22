@@ -69,13 +69,25 @@ public interface RequestMeasurement {
 		String RESPONSE_CODE = "responseCode";
 
 		/**
+		 * Sampler data
+		 */
+		String SAMPLER_DATA = "samplerData";
+		
+		/**
+		 * Response data
+		 */
+		String RESPONSE_DATA = "responseData";
+		
+		/**
 		 * Response message filed
 		 */
 		String RESPONSE_MSG = "responseMsg";
+		
 		/**
 		 * Sent bytes in request field
 		 */
 		String SENT_BYTES = "sentBytes";
+		
 		/**
 		 * Received bytes in response filed
 		 */
@@ -85,14 +97,17 @@ public interface RequestMeasurement {
 		 * URL
 		 */
 		String URL = "url";
+		
 		/**
 		 * URL field
 		 */
 		String IS_SUCCESSFUL = "success";
+		
 		/**
 		 * HTTP method field
 		 */
 		String HTTP_METHOD = "httpMethod";
+		
 		/**
 		 * Assertion fail message field
 		 */

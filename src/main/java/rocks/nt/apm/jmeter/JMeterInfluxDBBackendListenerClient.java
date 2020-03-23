@@ -170,7 +170,7 @@ public class JMeterInfluxDBBackendListenerClient extends AbstractBackendListener
 				}
 				
 				if (recordResponseData) {
-					pointBuilder.addField(RequestMeasurement.Fields.RESPONSE_DATA, sampleResult.getResponseDataAsString());
+					pointBuilder.addField(RequestMeasurement.Fields.RESPONSE_DATA, getResponseData(sampleResult));
 				}
 				
 				Point point = pointBuilder.build();
@@ -359,4 +359,14 @@ public class JMeterInfluxDBBackendListenerClient extends AbstractBackendListener
 				? ((HTTPSampleResult)sampleResult).getHTTPMethod() 
 				: "";
 	}
+	
+	/**
+	 * Gets Sampler response data as string, if response is null - returns an empty string 
+	 */
+	private String getResponseData(SampleResult sampleResult) {
+		String responseData = sampleResult.getResponseDataAsString();
+		return responseData != null
+				? responseData
+				: "";
+	}	
 }
